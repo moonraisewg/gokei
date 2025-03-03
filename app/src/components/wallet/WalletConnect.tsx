@@ -1,16 +1,16 @@
 
-import Button from '../common/Button';
+// import Button from '../common/Button';
 
-const WalletConnect = () => {
-  const handleConnect = () => {
-    console.log('Đang kết nối ví...');
-  };
+// const WalletConnect = () => {
+//   const handleConnect = () => {
+//     console.log('Đang kết nối ví...');
+//   };
 
-  return (
-    <Button onClick={handleConnect} variant="primary">
-      Kết nối ví
-    </Button>
-  );
-};
+//   return (
+//     <Button onClick={handleConnect} variant="primary">
+//       Kết nối ví
+//     </Button>
+//   );
+// };
 
-export default WalletConnect;
+// export default WalletConnect;

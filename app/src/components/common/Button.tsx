@@ -5,14 +5,16 @@ interface ButtonProps {
   onClick?: () => void;
   variant?: 'primary' | 'secondary';
   className?: string;
+  disabled?: boolean;
 }
 
-const Button = ({ children, onClick, variant = 'primary', className = '' }: ButtonProps) => {
+const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }: ButtonProps) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`px-4 py-2 rounded-lg font-medium 
-      ${variant === 'primary' ? 'bg-primary text-white' : 'bg-secondary text-gray-200'}
+      ${variant === 'primary' ? 'bg-primary text-white' : 'bg-secondary text-black-200'}
       ${className}`}
     >
       {children}
