@@ -1,6 +1,6 @@
 "use client"
 
-import { Wallet, Plus, Users, ChevronRight, Clock } from "lucide-react"
+import {Wallet, Plus, Users, ChevronRight, Clock, ArrowLeft} from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import '../styles/scrollbar.css'
 
@@ -37,12 +37,18 @@ export default function MultisigList() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A2A2A]">
         <div className="flex items-center space-x-2">
-          <Wallet className="w-5 h-5 text-white" />
+          <button
+              onClick={() => navigate('/dashboard')}
+              className="hover:bg-[#2A2A2A] p-2 rounded-lg"
+          >
+            <ArrowLeft className="h-5 w-5 text-white"/>
+          </button>
+          <Wallet className="w-5 h-5 text-white"/>
           <h2 className="text-lg font-medium text-white">Multisig Wallets</h2>
         </div>
-        <button 
-          onClick={() => navigate('/create-multisig')}
-          className="flex items-center space-x-1 bg-[#2A2A2A] text-white px-3 py-2 rounded-lg hover:bg-[#333333] transition-colors"
+        <button
+            onClick={() => navigate('/create-multisig')}
+            className="flex items-center space-x-1 bg-[#2A2A2A] text-white px-3 py-2 rounded-lg hover:bg-[#333333] transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span className="text-sm">New Wallet</span>

@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Shield, Key, Bell, Moon, HelpCircle, LogOut } from "lucide-react"
+import { ArrowLeft, Shield, Bell, Moon, HelpCircle, LogOut } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 
 export default function Settings() {
@@ -8,7 +8,6 @@ export default function Settings() {
 
   const settingItems = [
     { icon: Shield, label: "Security", description: "Protect your wallet" },
-    { icon: Key, label: "Private Keys", description: "View your keys" },
     { icon: Bell, label: "Notifications", description: "Manage alerts" },
     { icon: Moon, label: "Appearance", description: "Dark mode & theme" },
     { icon: HelpCircle, label: "Help & Support", description: "Get assistance" },

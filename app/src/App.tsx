@@ -1,4 +1,4 @@
-import Onboarding from "./pages/Onboarding";
+import Onboarding from "./pages/onboarding";
 import CreateWallet from "./pages/create-wallet";
 import WalletDashboard from "./pages/wallet-dashboard";
 import WalletAuth from "./pages/wallet-auth";

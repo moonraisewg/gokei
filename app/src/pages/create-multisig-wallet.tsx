@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, Trash2, ChevronDown, Wallet, Plus } from "lucide-react"
+import { X, Trash2, Wallet, Plus } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 import '../styles/scrollbar.css'
 
@@ -46,11 +46,11 @@ export default function CreateMultisigWallet() {
         <div className="space-y-2">
           <label className="block text-sm text-gray-400">Wallet Name</label>
           <input
-            type="text"
-            placeholder="Enter wallet name"
-            className="w-full p-3 rounded-lg bg-[#2A2A2A] text-white outline-none hover:bg-[#333333] transition-colors"
-            value={walletName}
-            onChange={(e) => setWalletName(e.target.value)}
+              type="text"
+              placeholder="Enter wallet name"
+              className="w-full p-3 rounded-lg bg-[#2A2A2A] text-white outline-none hover:bg-[#333333] transition-colors"
+              value={walletName}
+              onChange={(e) => setWalletName(e.target.value)}
           />
         </div>
 
@@ -59,47 +59,63 @@ export default function CreateMultisigWallet() {
           <label className="block text-sm text-gray-400">Wallet Members</label>
           <div className="space-y-2">
             {members.map((member, index) => (
-              <div key={index} className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Enter wallet address"
-                  className="flex-1 p-3 rounded-lg bg-[#2A2A2A] text-white outline-none hover:bg-[#333333] transition-colors"
-                  value={member}
-                  onChange={(e) => updateMember(index, e.target.value)}
-                />
-                <button 
-                  onClick={() => removeMember(index)} 
-                  className="p-3 text-gray-400 hover:text-white bg-[#2A2A2A] hover:bg-[#333333] rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
+                <div key={index} className="flex space-x-2">
+                  <input
+                      type="text"
+                      placeholder="Enter recovery key"
+                      className="flex-1 p-3 rounded-lg bg-[#2A2A2A] text-white outline-none hover:bg-[#333333] transition-colors"
+                      value={member}
+                      onChange={(e) => updateMember(index, e.target.value)}
+                  />
+                  <button
+                      onClick={() => removeMember(index)}
+                      className="p-3 text-gray-400 hover:text-white bg-[#2A2A2A] hover:bg-[#333333] rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5"/>
+                  </button>
+                </div>
             ))}
           </div>
-          <button 
-            onClick={addMember} 
-            className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white transition-colors p-2"
+          <button
+              onClick={addMember}
+              className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white transition-colors p-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4"/>
             <span>Add Member</span>
           </button>
         </div>
 
         {/* Required Signatures */}
+        {/* Required Signatures */}
         <div className="space-y-2">
           <label className="block text-sm text-gray-400">Required Signatures</label>
-          <button className="w-full p-3 rounded-lg bg-[#2A2A2A] text-white hover:bg-[#333333] transition-colors flex items-center justify-between">
-            <span>1 out of {members.length}</span>
-            <ChevronDown className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            <select
+                className="w-full p-3 rounded-lg bg-[#2A2A2A] text-white hover:bg-[#333333] focus:ring-2 focus:ring-[#555555] transition-all duration-200 appearance-none"
+            >
+              {Array.from({length: members.length}, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num} className="bg-[#2A2A2A] text-white">
+                    {num} out of {members.length}
+                  </option>
+              ))}
+            </select>
+            {/* Icon mũi tên dropdown */}
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2"
+                   viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
         </div>
+
       </div>
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-[#2A2A2A]">
-        <button 
-          onClick={() => navigate('/dashboard')}
-          className="w-full bg-[#2A2A2A] text-white py-3 rounded-lg font-medium hover:bg-[#333333] transition-colors"
+        <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-[#2A2A2A] text-white py-3 rounded-lg font-medium hover:bg-[#333333] transition-colors"
         >
           Create Wallet
         </button>
