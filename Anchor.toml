@@ -1,5 +1,5 @@
 [toolchain]
-anchor_version = "0.29.0"
+anchor_version = "0.30.1"
 
 [features]
 resolution = true
@@ -7,7 +7,7 @@ skip-lint = false
 seeds = false
 
 [programs.localnet]
-moon_wallet_program = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+moon_wallet_program = "C9AbkZSb8ugQep3oQu7qthuzHb2oSHrxcxwAdpQcRMmM"
 
 [registry]
 url = "https://api.apr.dev"
