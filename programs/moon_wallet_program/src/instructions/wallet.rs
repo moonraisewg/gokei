@@ -5,21 +5,23 @@ use sha2::{Sha256, Digest};
 
 // Context cho việc khởi tạo ví MultiSign
 #[derive(Accounts)]
+#[instruction(threshold: u8, recovery_hash: [u8; 32], credential_id: Vec<u8>)]
 pub struct InitializeMultisig<'info> {
     #[account(
         init,
         payer = fee_payer,
         space = 8 + // discriminator
                32 + // owner: Pubkey
-               1 + // threshold: u8
-               1 + // has_webauthn: bool
+               1 +  // threshold: u8
+               1 +  // has_webauthn: bool
                65 + // webauthn_pubkey: [u8; 65]
-               1 + // guardian_count: u8
+               4 + credential_id.len() + // credential_id (4 bytes cho chiều dài + dữ liệu)
+               1 +  // guardian_count: u8
                32 + // recovery_hash: [u8; 32]
                16 + // recovery_salt: [u8; 16]
-               8 + // recovery_nonce: u64
-               1, // bump: u8
-        seeds = [b"multisig", owner.key().as_ref()],
+               8 +  // recovery_nonce: u64
+               1,   // bump: u8
+        seeds = [b"multisig", credential_id.as_slice()],
         bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -38,7 +40,7 @@ pub struct InitializeMultisig<'info> {
 pub struct ConfigureWebAuthn<'info> {
     #[account(
         mut,
-        seeds = [b"multisig", owner.key().as_ref()],
+        seeds = [b"multisig", multisig.credential_id.as_slice()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -50,19 +52,27 @@ pub struct ConfigureWebAuthn<'info> {
 pub fn initialize_multisig(
     ctx: Context<InitializeMultisig>,
     threshold: u8,
-    recovery_hash: [u8; 32], // Thêm recovery_hash trực tiếp
+    recovery_hash: [u8; 32],
+    credential_id: Vec<u8>,
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
+    let owner = &ctx.accounts.owner;
     
     require!(threshold > 0, WalletError::InvalidConfig);
     
-    multisig.owner = ctx.accounts.owner.key();
+    // Lưu các trường thông tin
+    multisig.owner = owner.key();
     multisig.threshold = threshold;
+    multisig.has_webauthn = false;
+    multisig.webauthn_pubkey = [0; 65];
+    multisig.credential_id = credential_id;
+    multisig.guardian_count = 0;
     multisig.recovery_hash = recovery_hash;
-    multisig.bump = ctx.bumps.multisig;
+    multisig.recovery_salt = [0; 16];
     multisig.recovery_nonce = 0;
-    multisig.recovery_salt = [0u8; 16];
-
+    multisig.bump = ctx.bumps.multisig;
+    
+    msg!("Đã khởi tạo ví MultiSign thành công");
     Ok(())
 }
 
@@ -85,7 +95,7 @@ pub fn configure_webauthn(
 pub struct StoreRecoveryHash<'info> {
     #[account(
         mut,
-        seeds = [b"multisig", owner.key().as_ref()],
+        seeds = [b"multisig", multisig.credential_id.as_slice()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -98,12 +108,11 @@ pub struct StoreRecoveryHash<'info> {
 pub struct RecoverAccess<'info> {
     #[account(
         mut,
-        seeds = [b"multisig", multisig.owner.as_ref()],
+        seeds = [b"multisig", multisig.credential_id.as_slice()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
-    /// CHECK: Người dùng mới sẽ trở thành owner
     pub new_owner: AccountInfo<'info>,
     
     pub system_program: Program<'info, System>,
@@ -166,4 +175,3 @@ pub fn recover_access(
     Ok(())
 }
 
-// Loại bỏ hàm hash_recovery_key vì sẽ được xử lý ở frontend

@@ -17,9 +17,10 @@ pub mod moon_wallet_program {
     pub fn initialize_multisig(
         ctx: Context<InitializeMultisig>, 
         threshold: u8,
-        recovery_hash: [u8; 32]
+        recovery_hash: [u8; 32],
+        credential_id: Vec<u8>
     ) -> Result<()> {
-        instructions::wallet::initialize_multisig(ctx, threshold, recovery_hash)
+        instructions::wallet::initialize_multisig(ctx, threshold, recovery_hash, credential_id)
     }
 
     // Cấu hình WebAuthn cho ví
