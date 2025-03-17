@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::errors::*;
+use sha2::{Sha256, Digest};
 
 // Context cho việc khởi tạo ví MultiSign
 #[derive(Accounts)]
@@ -10,12 +11,13 @@ pub struct InitializeMultisig<'info> {
         payer = fee_payer,
         space = 8 + // discriminator
                32 + // owner: Pubkey
-               4 + 32 + // name: String (tối đa 32 ký tự)
                1 + // threshold: u8
                1 + // has_webauthn: bool
-               32 + // webauthn_pubkey: [u8; 32]
+               65 + // webauthn_pubkey: [u8; 65]
                1 + // guardian_count: u8
                32 + // recovery_hash: [u8; 32]
+               16 + // recovery_salt: [u8; 16]
+               8 + // recovery_nonce: u64
                1, // bump: u8
         seeds = [b"multisig", owner.key().as_ref()],
         bump
@@ -47,18 +49,19 @@ pub struct ConfigureWebAuthn<'info> {
 // Hàm khởi tạo ví MultiSign
 pub fn initialize_multisig(
     ctx: Context<InitializeMultisig>,
-    name: String,
     threshold: u8,
+    recovery_hash: [u8; 32], // Thêm recovery_hash trực tiếp
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     
-    require!(threshold > 0 && name.len() <= 16, WalletError::InvalidConfig);
+    require!(threshold > 0, WalletError::InvalidConfig);
     
     multisig.owner = ctx.accounts.owner.key();
-    multisig.name = name;
     multisig.threshold = threshold;
+    multisig.recovery_hash = recovery_hash;
     multisig.bump = ctx.bumps.multisig;
-    // Các trường khác mặc định là 0/false
+    multisig.recovery_nonce = 0;
+    multisig.recovery_salt = [0u8; 16];
 
     Ok(())
 }
@@ -66,7 +69,7 @@ pub fn initialize_multisig(
 // Hàm cấu hình WebAuthn
 pub fn configure_webauthn(
     ctx: Context<ConfigureWebAuthn>,
-    webauthn_pubkey: [u8; 32],
+    webauthn_pubkey: [u8; 65],
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     require!(multisig.owner == ctx.accounts.owner.key(), WalletError::InvalidOperation);
@@ -109,7 +112,8 @@ pub struct RecoverAccess<'info> {
 // Hàm lưu hash recovery key
 pub fn store_recovery_hash(
     ctx: Context<StoreRecoveryHash>,
-    recovery_hash: [u8; 32],
+    recovery_hash_intermediate: [u8; 32], // hash secp256r1 từ frontend
+    recovery_salt: [u8; 16],
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     let owner = &ctx.accounts.owner;
@@ -117,24 +121,36 @@ pub fn store_recovery_hash(
     // Kiểm tra quyền sở hữu
     require!(multisig.owner == owner.key(), WalletError::InvalidOperation);
 
-    // Lưu hash recovery key đã được tính toán ở frontend
-    multisig.recovery_hash = recovery_hash;
+    // Hash SHA-256 onchain trên kết quả hash secp256r1 từ frontend
+    let mut hasher = Sha256::new();
+    hasher.update(recovery_hash_intermediate);
+    let final_hash: [u8; 32] = hasher.finalize().into();
 
-    msg!("Recovery hash đã được lưu trữ");
+    // Lưu hash cuối cùng và salt
+    multisig.recovery_hash = final_hash;
+    multisig.recovery_salt = recovery_salt;
+    multisig.recovery_nonce += 1;
+
+    msg!("Recovery hash và salt đã được lưu trữ");
     Ok(())
 }
 
 // Hàm khôi phục quyền truy cập
 pub fn recover_access(
     ctx: Context<RecoverAccess>,
-    recovery_hash: [u8; 32],  // Đã được hash ở frontend
-    new_webauthn_pubkey: [u8; 32],
+    recovery_hash_intermediate: [u8; 32],
+    new_webauthn_pubkey: [u8; 65],
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     let new_owner = &ctx.accounts.new_owner;
     
-    // Xác minh hash đã được tính toán ở frontend
-    require!(multisig.recovery_hash == recovery_hash, WalletError::InvalidRecoveryKey);
+    // Hash SHA-256 onchain trên kết quả hash secp256r1 từ frontend
+    let mut hasher = Sha256::new();
+    hasher.update(recovery_hash_intermediate);
+    let final_hash: [u8; 32] = hasher.finalize().into();
+    
+    // Xác minh hash đã được tính toán
+    require!(multisig.recovery_hash == final_hash, WalletError::InvalidRecoveryKey);
     
     // Cập nhật thông tin owner mới
     multisig.owner = new_owner.key();
@@ -142,6 +158,9 @@ pub fn recover_access(
     // Cập nhật WebAuthn mới
     multisig.webauthn_pubkey = new_webauthn_pubkey;
     multisig.has_webauthn = true;
+    
+    // Tăng nonce để tránh replay attack
+    multisig.recovery_nonce += 1;
     
     msg!("Quyền truy cập đã được khôi phục thành công");
     Ok(())
