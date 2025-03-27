@@ -26,3 +26,27 @@ yarn-error.log*
 # Solana
 target/
 test-ledger/
+
+# MoonWallet specific
+*.md
+test*/
+*test.js
+*validator*
+test-validator/
+/agave/
+agave/
+validator/
+*_validator*
+*.test.*
+test_*/
+/test/
+tests/
+
+# Specific files
+/test_secp256r1_final.js
+/test_webauthn_final.js
+test_secp256r1_final.js
+test_webauthn_final.js
+/Users/tai/Documents/MoonWallet/moonwallet/test_secp256r1_final.js
+/Users/tai/Documents/MoonWallet/moonwallet/test_webauthn_final.js
+/Users/tai/Documents/MoonWallet/moonwallet/agave/

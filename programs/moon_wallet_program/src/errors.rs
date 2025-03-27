@@ -32,4 +32,37 @@ pub enum WalletError {
     
     #[msg("Không có guardian nào để xóa")]
     NoGuardians,
+    
+    #[msg("Nonce không hợp lệ")]
+    InvalidNonce,
+    
+    #[msg("Timestamp thuộc về tương lai")]
+    FutureTimestamp,
+    
+    #[msg("Timestamp quá cũ")]
+    OutdatedTimestamp,
+    
+    #[msg("Timestamp đã hết hạn")]
+    ExpiredTimestamp,
+    
+    #[msg("Instruction xác thực chữ ký bị thiếu")]
+    InstructionMissing,
+    
+    #[msg("Xác thực chữ ký không hợp lệ")]
+    InvalidSignatureVerification,
+    
+    #[msg("Public key không khớp với wallet")]
+    PublicKeyMismatch,
+    
+    #[msg("Message không khớp")]
+    MessageMismatch,
+    
+    #[msg("Dữ liệu instruction không hợp lệ")]
+    InvalidInstructionData,
+    
+    #[msg("Số lượng chữ ký không hợp lệ")]
+    InvalidSignatureCount,
+    
+    #[msg("Hành động không được hỗ trợ")]
+    UnsupportedAction,
 }

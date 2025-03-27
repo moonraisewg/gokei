@@ -5,9 +5,10 @@ mod instructions;
 mod errors;
 
 use instructions::*;
+use state::wallet::ActionParams;
 
 
-declare_id!("8z1cp83P8qTvmQzrF6PJfjq565MnKcpKkk2EUe4g574C");
+declare_id!("FVmLk6UEG6YJAhDmUgGGPCNuzs1L1ipha6SYgncrEFUC");
 
 #[program]
 pub mod moon_wallet_program {
@@ -36,8 +37,9 @@ pub mod moon_wallet_program {
         ctx: Context<AddGuardian>,
         guardian_pubkey: Pubkey,
         guardian_name: String,
+        recovery_hash_intermediate: [u8; 32],
     ) -> Result<()> {
-        instructions::guardian::add_guardian(ctx, guardian_pubkey, guardian_name)
+        instructions::guardian::add_guardian(ctx, guardian_pubkey, guardian_name, recovery_hash_intermediate)
     }
 
     // Lưu trữ hash mật khẩu
@@ -74,6 +76,27 @@ pub mod moon_wallet_program {
         new_webauthn_pubkey: [u8; 65],
     ) -> Result<()> {
         instructions::wallet::recover_access(ctx, recovery_hash_intermediate, new_webauthn_pubkey)
+    }
+    
+    // Khôi phục quyền truy cập bằng Guardian Recovery Hash
+    pub fn recover_access_by_guardian(
+        ctx: Context<RecoverAccessByGuardian>,
+        recovery_hash_intermediate: [u8; 32],
+        new_webauthn_pubkey: [u8; 65],
+    ) -> Result<()> {
+        instructions::guardian::recover_access_by_guardian(ctx, recovery_hash_intermediate, new_webauthn_pubkey)
+    }
+
+    // Xác thực và thực hiện giao dịch
+    pub fn verify_and_execute(
+        ctx: Context<VerifyAndExecute>,
+        action: String,
+        params: ActionParams,
+        nonce: u64,
+        timestamp: i64,
+        message: Vec<u8>
+    ) -> Result<()> {
+        instructions::wallet::verify_and_execute(ctx, action, params, nonce, timestamp, message)
     }
 }
 
