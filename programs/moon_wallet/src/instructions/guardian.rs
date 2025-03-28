@@ -37,38 +37,31 @@ pub fn add_guardian(
     ctx: Context<AddGuardian>,
     guardian_pubkey: Pubkey,
     guardian_name: String,
-    recovery_hash_intermediate: [u8; 32], // hash secp256r1 từ frontend
+    recovery_hash_intermediate: [u8; 32],   
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     let guardian = &mut ctx.accounts.guardian;
     let owner = &ctx.accounts.owner;
 
-    // Kiểm tra quyền sở hữu
     require!(multisig.owner == owner.key(), WalletError::InvalidOperation);
     
-    // Kiểm tra số lượng guardian
     require!(multisig.guardian_count < 8, WalletError::LimitExceeded);
     
-    // Giới hạn độ dài tên guardian
     require!(guardian_name.len() <= 32, WalletError::NameTooLong);
 
-    // Hash SHA-256 onchain trên kết quả hash secp256r1 từ frontend
     let mut hasher = Sha256::new();
     hasher.update(recovery_hash_intermediate);
     let final_hash: [u8; 32] = hasher.finalize().into();
 
-    // Khởi tạo dữ liệu guardian
     guardian.wallet = multisig.key();
     guardian.pubkey = guardian_pubkey;
     guardian.name = guardian_name;
     guardian.is_active = true;
-    guardian.recovery_hash = final_hash; // Lưu hash recovery key
+    guardian.recovery_hash = final_hash; 
     guardian.bump = ctx.bumps.guardian;
 
-    // Cập nhật số lượng guardian
     multisig.guardian_count += 1;
     
-    // Nếu đây là guardian đầu tiên, hãy cập nhật recovery hash cho wallet
     if multisig.guardian_count == 1 {
         multisig.recovery_hash = final_hash;
     }
@@ -77,7 +70,6 @@ pub fn add_guardian(
     Ok(())
 }
 
-// Thêm context cho việc xóa guardian
 #[derive(Accounts)]
 pub struct RemoveGuardian<'info> {
     #[account(
@@ -95,7 +87,7 @@ pub struct RemoveGuardian<'info> {
     )]
     pub guardian: Account<'info, Guardian>,
     
-    /// CHECK: Chỉ sử dụng để tìm account
+    /// CHECK: find account
     pub guardian_pubkey: AccountInfo<'info>,
     
     #[account(mut)]
@@ -104,15 +96,13 @@ pub struct RemoveGuardian<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// Hàm xóa guardian
 pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     let owner = &ctx.accounts.owner;
 
-    // Kiểm tra quyền sở hữu
     require!(multisig.owner == owner.key(), WalletError::InvalidOperation);
     
-    // Giảm số lượng guardian
+  
     require!(multisig.guardian_count > 0, WalletError::GuardianError);
     multisig.guardian_count -= 1;
 
@@ -190,33 +180,30 @@ pub struct RecoverAccessByGuardian<'info> {
 pub fn recover_access_by_guardian(
     ctx: Context<RecoverAccessByGuardian>,
     recovery_hash_intermediate: [u8; 32],
-    new_webauthn_pubkey: [u8; 65],
+    new_webauthn_pubkey: [u8; 33],
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     let guardian = &ctx.accounts.guardian;
     let new_owner = &ctx.accounts.new_owner;
     
-    // Kiểm tra xem guardian có active không
-    require!(guardian.is_active, WalletError::GuardianError);
+    // Kiểm tra guardian
+    require!(guardian.wallet == multisig.key(), WalletError::InvalidGuardian);
+    require!(guardian.is_active, WalletError::InactiveGuardian);
+    require!(guardian.pubkey == ctx.accounts.guardian_pubkey.key(), WalletError::InvalidGuardian);
     
-    // Hash SHA-256 onchain trên kết quả hash secp256r1 từ frontend
-    let mut hasher = Sha256::new();
-    hasher.update(recovery_hash_intermediate);
-    let final_hash: [u8; 32] = hasher.finalize().into();
+    // Xác minh hash khôi phục
+    require!(guardian.recovery_hash == recovery_hash_intermediate, WalletError::InvalidRecoveryKey);
     
-    // Xác minh hash đã được tính toán khớp với hash của guardian
-    require!(guardian.recovery_hash == final_hash, WalletError::InvalidRecoveryKey);
-    
-    // Cập nhật thông tin owner mới
+    // Cập nhật thông tin chủ sở hữu mới
     multisig.owner = new_owner.key();
     
-    // Cập nhật WebAuthn mới
+    // Cập nhật keys WebAuthn mới
     multisig.webauthn_pubkey = new_webauthn_pubkey;
     multisig.has_webauthn = true;
     
-    // Tăng nonce để tránh replay attack
+    // Tăng nonce để ngăn chặn tấn công phát lại
     multisig.recovery_nonce += 1;
     
-    msg!("Quyền truy cập đã được khôi phục thành công bằng Guardian Recovery");
+    msg!("Quyền truy cập đã được khôi phục thành công thông qua guardian");
     Ok(())
 }

@@ -94,7 +94,7 @@ export type MoonWalletProgram = {
           "type": {
             "array": [
               "u8",
-              65
+              33
             ]
           }
         }
@@ -188,7 +188,7 @@ export type MoonWalletProgram = {
           "type": {
             "array": [
               "u8",
-              65
+              33
             ]
           }
         }
@@ -239,7 +239,7 @@ export type MoonWalletProgram = {
           "type": {
             "array": [
               "u8",
-              65
+              33
             ]
           }
         }
@@ -610,6 +610,16 @@ export type MoonWalletProgram = {
       "code": 6020,
       "name": "unsupportedAction",
       "msg": "Hành động không được hỗ trợ"
+    },
+    {
+      "code": 6021,
+      "name": "invalidGuardian",
+      "msg": "Guardian không hợp lệ hoặc không được tìm thấy"
+    },
+    {
+      "code": 6022,
+      "name": "inactiveGuardian",
+      "msg": "Guardian đang không hoạt động"
     }
   ],
   "types": [
@@ -698,7 +708,7 @@ export type MoonWalletProgram = {
             "type": {
               "array": [
                 "u8",
-                65
+                33
               ]
             }
           },

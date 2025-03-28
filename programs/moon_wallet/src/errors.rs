@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-// Định nghĩa các mã lỗi
+
 #[error_code]
 pub enum WalletError {
     #[msg("Không có quyền hoặc dữ liệu không hợp lệ")]
@@ -65,4 +65,10 @@ pub enum WalletError {
     
     #[msg("Hành động không được hỗ trợ")]
     UnsupportedAction,
+    
+    #[msg("Guardian không hợp lệ hoặc không được tìm thấy")]
+    InvalidGuardian,
+    
+    #[msg("Guardian đang không hoạt động")]
+    InactiveGuardian,
 }
