@@ -7,7 +7,7 @@ use crate::errors::*;
 pub struct StorePasswordHash<'info> {
     #[account(
         mut,
-        seeds = [b"multisig", owner.key().as_ref()],
+        seeds = [b"multisig", multisig.credential_id.as_slice()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,

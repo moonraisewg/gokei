@@ -4,16 +4,19 @@ anchor_version = "0.30.1"
 [features]
 resolution = false
 seeds = false
-skip-lint = false
+skip-lint = true
+no-log-ix-name = true
+no-idl = false
+idl-build = true
 
 [programs.localnet]
-moon_wallet_program = "FVmLk6UEG6YJAhDmUgGGPCNuzs1L1ipha6SYgncrEFUC"
+moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
 
 [programs.devnet]
-moon_wallet_program = "CXfy2ERHjviuNShMhZqikSwWtDk2m6aPMeaEpqeHpDUT"
+moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
 
 [programs.mainnet]
-moon_wallet_program = "CXfy2ERHjviuNShMhZqikSwWtDk2m6aPMeaEpqeHpDUT"
+moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
 
 [registry]
 url = "https://api.apr.dev"

@@ -8,7 +8,7 @@ use instructions::*;
 use state::wallet::ActionParams;
 
 
-declare_id!("FVmLk6UEG6YJAhDmUgGGPCNuzs1L1ipha6SYgncrEFUC");
+declare_id!("DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw");
 
 #[program]
 pub mod moon_wallet_program {
