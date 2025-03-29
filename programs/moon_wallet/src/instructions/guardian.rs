@@ -5,10 +5,11 @@ use anchor_lang::solana_program::hash::hash;
 
 // Context cho việc thêm guardian
 #[derive(Accounts)]
+#[instruction(guardian_id: u64)]
 pub struct AddGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -18,19 +19,19 @@ pub struct AddGuardian<'info> {
         payer = payer,
         space = 8 + 
                32 +  // wallet
-               32 +  // pubkey
+               8 +  // guardian_id (u64)
                4 + 32 + // name (string có max 32 bytes)
                1 +   // is_active
                32 +  // recovery_hash
                1 +   // is_owner
                1 + 33 + // Optional webauthn_pubkey (1 byte discriminator + 33 bytes)
                1,    // bump
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), guardian_pubkey.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian_id.to_le_bytes()],
         bump
     )]
     pub guardian: Account<'info, Guardian>,
     
-    /// CHECK: Chỉ lưu trữ public key
+    /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub guardian_pubkey: AccountInfo<'info>,
     
     #[account(mut)]
@@ -42,7 +43,7 @@ pub struct AddGuardian<'info> {
 // Hàm thêm guardian
 pub fn add_guardian(
     ctx: Context<AddGuardian>,
-    guardian_pubkey: Pubkey,
+    guardian_id: u64,
     guardian_name: String,
     recovery_hash_intermediate: [u8; 32],
     is_owner: bool,
@@ -70,7 +71,7 @@ pub fn add_guardian(
     let final_hash: [u8; 32] = hash_result.to_bytes();
 
     guardian.wallet = multisig.key();
-    guardian.guardian_id = guardian_pubkey;
+    guardian.guardian_id = guardian_id;
     guardian.name = guardian_name;
     guardian.is_active = true;
     guardian.recovery_hash = final_hash; 
@@ -89,29 +90,29 @@ pub fn add_guardian(
 }
 
 #[derive(Accounts)]
-#[instruction()]
+#[instruction(guardian_id: u64, owner_guardian_id: u64)]
 pub struct RemoveGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
     #[account(
         mut,
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), guardian_pubkey.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian_id.to_le_bytes()],
         bump = guardian.bump,
         close = owner
     )]
     pub guardian: Account<'info, Guardian>,
     
-    /// CHECK: find account
+    /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub guardian_pubkey: AccountInfo<'info>,
     
     /// Yêu cầu phải được ký bởi một guardian có quyền owner
     #[account(
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), owner.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &owner_guardian_id.to_le_bytes()],
         constraint = owner_guardian.is_owner == true,
         bump = owner_guardian.bump
     )]
@@ -136,26 +137,27 @@ pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
 
 // Thêm context cho việc cập nhật trạng thái guardian
 #[derive(Accounts)]
+#[instruction(guardian_id: u64, owner_guardian_id: u64, is_active: bool)]
 pub struct UpdateGuardianStatus<'info> {
     #[account(
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
     #[account(
         mut,
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), guardian_pubkey.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian_id.to_le_bytes()],
         bump = guardian.bump
     )]
     pub guardian: Account<'info, Guardian>,
     
-    /// CHECK: Chỉ sử dụng để tìm account
+    /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub guardian_pubkey: AccountInfo<'info>,
     
     /// Tài khoản guardian của người gọi, phải là owner
     #[account(
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), owner.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &owner_guardian_id.to_le_bytes()],
         constraint = owner_guardian.is_owner == true,
         bump = owner_guardian.bump
     )]
@@ -185,10 +187,11 @@ pub fn update_guardian_status(
 
 // Context cho việc khôi phục quyền truy cập bằng Guardian Recovery Hash
 #[derive(Accounts)]
+#[instruction(old_guardian_id: u64, new_guardian_id: u64, recovery_hash_intermediate: [u8; 32])]
 pub struct RecoverAccessByGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -196,24 +199,24 @@ pub struct RecoverAccessByGuardian<'info> {
     /// Guardian cũ (không phải owner nữa)
     #[account(
         mut,
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), old_guardian_pubkey.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &old_guardian_id.to_le_bytes()],
         bump = old_guardian.bump,
         constraint = old_guardian.is_owner == true
     )]
     pub old_guardian: Account<'info, Guardian>,
     
-    /// CHECK: Chỉ sử dụng để tìm account
+    /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub old_guardian_pubkey: AccountInfo<'info>,
     
     /// Guardian mới (sẽ trở thành owner)
     #[account(
         mut,
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), new_guardian_pubkey.key().as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &new_guardian_id.to_le_bytes()],
         bump = new_guardian.bump
     )]
     pub new_guardian: Account<'info, Guardian>,
     
-    /// CHECK: Chỉ sử dụng để tìm account
+    /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub new_guardian_pubkey: AccountInfo<'info>,
     
     pub system_program: Program<'info, System>,

@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/moon_wallet_program.json`.
  */
 export type MoonWalletProgram = {
-  "address": "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw",
+  "address": "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3",
   "metadata": {
     "name": "moonWalletProgram",
     "version": "0.1.0",
@@ -48,8 +48,8 @@ export type MoonWalletProgram = {
       ],
       "args": [
         {
-          "name": "guardianPubkey",
-          "type": "pubkey"
+          "name": "guardianId",
+          "type": "u64"
         },
         {
           "name": "guardianName",
@@ -111,6 +111,10 @@ export type MoonWalletProgram = {
         {
           "name": "threshold",
           "type": "u8"
+        },
+        {
+          "name": "credentialId",
+          "type": "string"
         }
       ]
     },
@@ -156,6 +160,14 @@ export type MoonWalletProgram = {
         }
       ],
       "args": [
+        {
+          "name": "oldGuardianId",
+          "type": "u64"
+        },
+        {
+          "name": "newGuardianId",
+          "type": "u64"
+        },
         {
           "name": "recoveryHashIntermediate",
           "type": {
@@ -215,7 +227,16 @@ export type MoonWalletProgram = {
           "name": "systemProgram"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "guardianId",
+          "type": "u64"
+        },
+        {
+          "name": "ownerGuardianId",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "updateGuardianStatus",
@@ -253,6 +274,14 @@ export type MoonWalletProgram = {
         }
       ],
       "args": [
+        {
+          "name": "guardianId",
+          "type": "u64"
+        },
+        {
+          "name": "ownerGuardianId",
+          "type": "u64"
+        },
         {
           "name": "isActive",
           "type": "bool"
@@ -512,7 +541,7 @@ export type MoonWalletProgram = {
           },
           {
             "name": "guardianId",
-            "type": "pubkey"
+            "type": "u64"
           },
           {
             "name": "name",
@@ -581,6 +610,14 @@ export type MoonWalletProgram = {
           {
             "name": "lastTransactionTimestamp",
             "type": "i64"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "credentialId",
+            "type": "string"
           }
         ]
       }

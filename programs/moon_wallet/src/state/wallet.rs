@@ -9,6 +9,8 @@ pub struct MultiSigWallet {
     pub bump: u8,                    
     pub transaction_nonce: u64,      
     pub last_transaction_timestamp: i64, 
+    pub owner: Pubkey,               // Public key của người tạo ví
+    pub credential_id: String,       // Credential ID từ WebAuthn, dùng làm seed
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

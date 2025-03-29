@@ -7,7 +7,7 @@ use crate::errors::*;
 
 
 #[derive(Accounts)]
-#[instruction(threshold: u8)]
+#[instruction(threshold: u8, credential_id: String)]
 pub struct InitializeMultisig<'info> {
     #[account(
         init,
@@ -18,8 +18,10 @@ pub struct InitializeMultisig<'info> {
                8 +  // recovery_nonce
                1 +  // bump
                8 +  // transaction_nonce
-               8,   // last_transaction_timestamp
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+               8 +  // last_transaction_timestamp
+               32 + // owner
+               4 + credential_id.len(), // credential_id với 4 bytes cho độ dài
+        seeds = [b"multisig".as_ref(), credential_id.as_bytes()],
         bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -33,10 +35,13 @@ pub struct InitializeMultisig<'info> {
 pub fn initialize_multisig(
     ctx: Context<InitializeMultisig>,
     threshold: u8,
+    credential_id: String,
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     
     require!(threshold > 0, WalletError::InvalidConfig);
+    require!(credential_id.len() > 0, WalletError::InvalidConfig);
+    require!(credential_id.len() <= 64, WalletError::NameTooLong);
     
     multisig.threshold = threshold;
     multisig.guardian_count = 0;
@@ -44,8 +49,10 @@ pub fn initialize_multisig(
     multisig.bump = ctx.bumps.multisig;
     multisig.transaction_nonce = 0;
     multisig.last_transaction_timestamp = 0;
+    multisig.owner = ctx.accounts.fee_payer.key();
+    multisig.credential_id = credential_id;
     
-    msg!("Đã khởi tạo ví MultiSign thành công");
+    msg!("Đã khởi tạo ví MultiSign thành công với tên: {}", multisig.credential_id);
     msg!("Hãy thêm guardian đầu tiên làm owner");
     Ok(())
 }
@@ -54,14 +61,14 @@ pub fn initialize_multisig(
 pub struct VerifyAndExecute<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
+        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
     /// Tìm guardian owner có webauthn_pubkey mà chúng ta cần xác thực
     #[account(
-        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), guardian.guardian_id.as_ref()],
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian.guardian_id.to_le_bytes()],
         constraint = guardian.is_owner == true,
         bump = guardian.bump
     )]
@@ -230,7 +237,7 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
     let wallet_address = ctx.accounts.multisig.key();
     let seeds = &[
         b"multisig".as_ref(),
-        b"seed_for_pda".as_ref(),
+        ctx.accounts.multisig.credential_id.as_bytes(),
         &[ctx.accounts.multisig.bump]
     ];
     

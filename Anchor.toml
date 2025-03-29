@@ -10,13 +10,13 @@ no-idl = false
 idl-build = true
 
 [programs.localnet]
-moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
+moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
 
 [programs.devnet]
-moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
+moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
 
 [programs.mainnet]
-moon_wallet_program = "DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw"
+moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
 
 [registry]
 url = "https://api.apr.dev"
@@ -24,6 +24,9 @@ url = "https://api.apr.dev"
 [provider]
 cluster = "Localnet"
 wallet = "/Users/tai/.config/solana/id.json"
+commitment = "processed"
+pre_flight = false
+timeout = 300000  # 5 phút để chờ giao dịch triển khai
 
 [dependencies] 
 bytemuck_derive = "=1.7.0"
@@ -41,6 +44,5 @@ types = "./types"
 startup_wait = 10000
 
 
-[build]
-   max_program_size = 500000
+
 

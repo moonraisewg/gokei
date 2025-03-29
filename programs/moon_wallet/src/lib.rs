@@ -8,7 +8,7 @@ use instructions::*;
 use state::wallet::ActionParams;
 
 
-declare_id!("DSteVhVB7YDw4UMRPid2y4rNqZyEyfHPMp6jWvFyQqjw");
+declare_id!("DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3");
 
 #[program]
 pub mod moon_wallet_program {
@@ -17,31 +17,43 @@ pub mod moon_wallet_program {
     pub fn initialize_multisig(
         ctx: Context<InitializeMultisig>, 
         threshold: u8,
+        credential_id: String
     ) -> Result<()> {
-        instructions::wallet::initialize_multisig(ctx, threshold)
+        instructions::wallet::initialize_multisig(ctx, threshold, credential_id)
     }
 
     pub fn add_guardian(
         ctx: Context<AddGuardian>,
-        guardian_pubkey: Pubkey,
+        guardian_id: u64,
         guardian_name: String,
         recovery_hash_intermediate: [u8; 32],
         is_owner: bool,
         webauthn_pubkey: Option<[u8; 33]>
     ) -> Result<()> {
-        instructions::guardian::add_guardian(ctx, guardian_pubkey, guardian_name, recovery_hash_intermediate, is_owner, webauthn_pubkey)
+        instructions::guardian::add_guardian(ctx, guardian_id, guardian_name, recovery_hash_intermediate, is_owner, webauthn_pubkey)
     }
 
-    pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
+    pub fn remove_guardian(
+        ctx: Context<RemoveGuardian>,
+        _guardian_id: u64,
+        _owner_guardian_id: u64
+    ) -> Result<()> {
         instructions::guardian::remove_guardian(ctx)
     }
 
-    pub fn update_guardian_status(ctx: Context<UpdateGuardianStatus>, is_active: bool) -> Result<()> {
+    pub fn update_guardian_status(
+        ctx: Context<UpdateGuardianStatus>, 
+        _guardian_id: u64,
+        _owner_guardian_id: u64,
+        is_active: bool
+    ) -> Result<()> {
         instructions::guardian::update_guardian_status(ctx, is_active)
     }
 
     pub fn recover_access_by_guardian(
         ctx: Context<RecoverAccessByGuardian>,
+        _old_guardian_id: u64,
+        _new_guardian_id: u64,
         recovery_hash_intermediate: [u8; 32],
         new_webauthn_pubkey: [u8; 33],
     ) -> Result<()> {

@@ -41,6 +41,7 @@ validator/
 test_*/
 /test/
 tests/
+/frontend_test/
 
 # Specific files
 /test_secp256r1_final.js
