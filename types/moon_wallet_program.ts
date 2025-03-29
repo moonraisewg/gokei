@@ -38,7 +38,7 @@ export type MoonWalletProgram = {
           "name": "guardianPubkey"
         },
         {
-          "name": "owner",
+          "name": "payer",
           "writable": true,
           "signer": true
         },
@@ -63,39 +63,20 @@ export type MoonWalletProgram = {
               32
             ]
           }
-        }
-      ]
-    },
-    {
-      "name": "configureWebauthn",
-      "discriminator": [
-        40,
-        149,
-        116,
-        224,
-        148,
-        48,
-        159,
-        54
-      ],
-      "accounts": [
-        {
-          "name": "multisig",
-          "writable": true
         },
         {
-          "name": "owner",
-          "signer": true
-        }
-      ],
-      "args": [
+          "name": "isOwner",
+          "type": "bool"
+        },
         {
           "name": "webauthnPubkey",
           "type": {
-            "array": [
-              "u8",
-              33
-            ]
+            "option": {
+              "array": [
+                "u8",
+                33
+              ]
+            }
           }
         }
       ]
@@ -118,9 +99,6 @@ export type MoonWalletProgram = {
           "writable": true
         },
         {
-          "name": "owner"
-        },
-        {
           "name": "feePayer",
           "writable": true,
           "signer": true
@@ -133,64 +111,6 @@ export type MoonWalletProgram = {
         {
           "name": "threshold",
           "type": "u8"
-        },
-        {
-          "name": "recoveryHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "credentialId",
-          "type": "bytes"
-        }
-      ]
-    },
-    {
-      "name": "recoverAccess",
-      "discriminator": [
-        226,
-        22,
-        59,
-        155,
-        84,
-        251,
-        194,
-        9
-      ],
-      "accounts": [
-        {
-          "name": "multisig",
-          "writable": true
-        },
-        {
-          "name": "newOwner"
-        },
-        {
-          "name": "systemProgram"
-        }
-      ],
-      "args": [
-        {
-          "name": "recoveryHashIntermediate",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "newWebauthnPubkey",
-          "type": {
-            "array": [
-              "u8",
-              33
-            ]
-          }
         }
       ]
     },
@@ -212,13 +132,24 @@ export type MoonWalletProgram = {
           "writable": true
         },
         {
-          "name": "guardian"
+          "name": "oldGuardian",
+          "docs": [
+            "Guardian cũ (không phải owner nữa)"
+          ],
+          "writable": true
         },
         {
-          "name": "guardianPubkey"
+          "name": "oldGuardianPubkey"
         },
         {
-          "name": "newOwner"
+          "name": "newGuardian",
+          "docs": [
+            "Guardian mới (sẽ trở thành owner)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "newGuardianPubkey"
         },
         {
           "name": "systemProgram"
@@ -270,6 +201,12 @@ export type MoonWalletProgram = {
           "name": "guardianPubkey"
         },
         {
+          "name": "ownerGuardian",
+          "docs": [
+            "Yêu cầu phải được ký bởi một guardian có quyền owner"
+          ]
+        },
+        {
           "name": "owner",
           "writable": true,
           "signer": true
@@ -279,91 +216,6 @@ export type MoonWalletProgram = {
         }
       ],
       "args": []
-    },
-    {
-      "name": "storePasswordHash",
-      "discriminator": [
-        242,
-        169,
-        229,
-        238,
-        249,
-        138,
-        212,
-        106
-      ],
-      "accounts": [
-        {
-          "name": "multisig",
-          "writable": true
-        },
-        {
-          "name": "security",
-          "writable": true
-        },
-        {
-          "name": "owner",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "systemProgram"
-        }
-      ],
-      "args": [
-        {
-          "name": "passwordHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "storeRecoveryHash",
-      "discriminator": [
-        188,
-        226,
-        179,
-        52,
-        171,
-        198,
-        28,
-        159
-      ],
-      "accounts": [
-        {
-          "name": "multisig",
-          "writable": true
-        },
-        {
-          "name": "owner",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "recoveryHashIntermediate",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "recoverySalt",
-          "type": {
-            "array": [
-              "u8",
-              16
-            ]
-          }
-        }
-      ]
     },
     {
       "name": "updateGuardianStatus",
@@ -389,7 +241,14 @@ export type MoonWalletProgram = {
           "name": "guardianPubkey"
         },
         {
+          "name": "ownerGuardian",
+          "docs": [
+            "Tài khoản guardian của người gọi, phải là owner"
+          ]
+        },
+        {
           "name": "owner",
+          "writable": true,
           "signer": true
         }
       ],
@@ -416,6 +275,12 @@ export type MoonWalletProgram = {
         {
           "name": "multisig",
           "writable": true
+        },
+        {
+          "name": "guardian",
+          "docs": [
+            "Tìm guardian owner có webauthn_pubkey mà chúng ta cần xác thực"
+          ]
         },
         {
           "name": "clock"
@@ -489,19 +354,6 @@ export type MoonWalletProgram = {
         77,
         189,
         238
-      ]
-    },
-    {
-      "name": "security",
-      "discriminator": [
-        42,
-        116,
-        80,
-        35,
-        124,
-        17,
-        68,
-        246
       ]
     }
   ],
@@ -659,7 +511,7 @@ export type MoonWalletProgram = {
             "type": "pubkey"
           },
           {
-            "name": "pubkey",
+            "name": "guardianId",
             "type": "pubkey"
           },
           {
@@ -680,6 +532,21 @@ export type MoonWalletProgram = {
             }
           },
           {
+            "name": "isOwner",
+            "type": "bool"
+          },
+          {
+            "name": "webauthnPubkey",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  33
+                ]
+              }
+            }
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -692,51 +559,12 @@ export type MoonWalletProgram = {
         "kind": "struct",
         "fields": [
           {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
             "name": "threshold",
             "type": "u8"
           },
           {
-            "name": "hasWebauthn",
-            "type": "bool"
-          },
-          {
-            "name": "webauthnPubkey",
-            "type": {
-              "array": [
-                "u8",
-                33
-              ]
-            }
-          },
-          {
-            "name": "credentialId",
-            "type": "bytes"
-          },
-          {
             "name": "guardianCount",
             "type": "u8"
-          },
-          {
-            "name": "recoveryHash",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "recoverySalt",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
           },
           {
             "name": "recoveryNonce",
@@ -753,31 +581,6 @@ export type MoonWalletProgram = {
           {
             "name": "lastTransactionTimestamp",
             "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "security",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "wallet",
-            "type": "pubkey"
-          },
-          {
-            "name": "passwordHash",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
           }
         ]
       }

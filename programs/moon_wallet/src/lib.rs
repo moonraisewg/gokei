@@ -17,18 +17,8 @@ pub mod moon_wallet_program {
     pub fn initialize_multisig(
         ctx: Context<InitializeMultisig>, 
         threshold: u8,
-        recovery_hash: [u8; 32],
-        credential_id: Vec<u8>
     ) -> Result<()> {
-        instructions::wallet::initialize_multisig(ctx, threshold, recovery_hash, credential_id)
-    }
-
- 
-    pub fn configure_webauthn(
-        ctx: Context<ConfigureWebAuthn>,
-        webauthn_pubkey: [u8; 33],
-    ) -> Result<()> {
-        instructions::wallet::configure_webauthn(ctx, webauthn_pubkey)
+        instructions::wallet::initialize_multisig(ctx, threshold)
     }
 
     pub fn add_guardian(
@@ -36,15 +26,10 @@ pub mod moon_wallet_program {
         guardian_pubkey: Pubkey,
         guardian_name: String,
         recovery_hash_intermediate: [u8; 32],
+        is_owner: bool,
+        webauthn_pubkey: Option<[u8; 33]>
     ) -> Result<()> {
-        instructions::guardian::add_guardian(ctx, guardian_pubkey, guardian_name, recovery_hash_intermediate)
-    }
-
-    pub fn store_password_hash(
-        ctx: Context<StorePasswordHash>,
-        password_hash: [u8; 32],
-    ) -> Result<()> {
-        instructions::security::store_password_hash(ctx, password_hash)
+        instructions::guardian::add_guardian(ctx, guardian_pubkey, guardian_name, recovery_hash_intermediate, is_owner, webauthn_pubkey)
     }
 
     pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
@@ -55,24 +40,6 @@ pub mod moon_wallet_program {
         instructions::guardian::update_guardian_status(ctx, is_active)
     }
 
-    pub fn store_recovery_hash(
-        ctx: Context<StoreRecoveryHash>,
-        recovery_hash_intermediate: [u8; 32], 
-        recovery_salt: [u8; 16],
-    ) -> Result<()> {
-        instructions::wallet::store_recovery_hash(ctx, recovery_hash_intermediate, recovery_salt)
-    }
-
-    
-    pub fn recover_access(
-        ctx: Context<RecoverAccess>,
-        recovery_hash_intermediate: [u8; 32],
-        new_webauthn_pubkey: [u8; 33],
-    ) -> Result<()> {
-        instructions::wallet::recover_access(ctx, recovery_hash_intermediate, new_webauthn_pubkey)
-    }
-    
-
     pub fn recover_access_by_guardian(
         ctx: Context<RecoverAccessByGuardian>,
         recovery_hash_intermediate: [u8; 32],
@@ -80,7 +47,6 @@ pub mod moon_wallet_program {
     ) -> Result<()> {
         instructions::guardian::recover_access_by_guardian(ctx, recovery_hash_intermediate, new_webauthn_pubkey)
     }
-
 
     pub fn verify_and_execute(
         ctx: Context<VerifyAndExecute>,
@@ -94,5 +60,3 @@ pub mod moon_wallet_program {
     }
 }
 
-#[derive(Accounts)]
-pub struct Initialize {}

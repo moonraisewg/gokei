@@ -4,36 +4,25 @@ use anchor_lang::solana_program;
 use anchor_lang::solana_program::sysvar::instructions::load_instruction_at_checked;
 use crate::state::*;
 use crate::errors::*;
-use sha2::{Sha256, Digest};
 
 
 #[derive(Accounts)]
-#[instruction(threshold: u8, recovery_hash: [u8; 32], credential_id: Vec<u8>)]
+#[instruction(threshold: u8)]
 pub struct InitializeMultisig<'info> {
     #[account(
         init,
         payer = fee_payer,
         space = 8 + 
-               32 + 
-               1 +  
-               1 +  
-               33 + 
-               4 + credential_id.len() + 
-               1 +  
-               32 + 
-               32 + 
-               16 + 
-               8 +  
-               1 +  
-               8 +  
-               8,  
-        seeds = [b"multisig", credential_id.as_slice()],
+               1 +  // threshold
+               1 +  // guardian_count
+               8 +  // recovery_nonce
+               1 +  // bump
+               8 +  // transaction_nonce
+               8,   // last_transaction_timestamp
+        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
         bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
-    
-    /// CHECK: Đây là địa chỉ chủ của ví, được sử dụng để lưu trữ và không cần validate
-    pub owner: AccountInfo<'info>,
     
     #[account(mut)]
     pub fee_payer: Signer<'info>,
@@ -41,156 +30,46 @@ pub struct InitializeMultisig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-
-#[derive(Accounts)]
-pub struct ConfigureWebAuthn<'info> {
-    #[account(
-        mut,
-        seeds = [b"multisig", multisig.credential_id.as_slice()],
-        bump = multisig.bump
-    )]
-    pub multisig: Account<'info, MultiSigWallet>,
-    
-    pub owner: Signer<'info>,
-}
-
-
 pub fn initialize_multisig(
     ctx: Context<InitializeMultisig>,
     threshold: u8,
-    recovery_hash: [u8; 32],
-    credential_id: Vec<u8>,
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
-    let owner = &ctx.accounts.owner;
     
     require!(threshold > 0, WalletError::InvalidConfig);
     
-    multisig.owner = owner.key();
     multisig.threshold = threshold;
-    multisig.has_webauthn = false;
-    multisig.webauthn_pubkey = [0; 33];
-    multisig.credential_id = credential_id;
     multisig.guardian_count = 0;
-
-    multisig.recovery_hash = recovery_hash;
-    multisig.recovery_salt = [0; 16];
     multisig.recovery_nonce = 0;
     multisig.bump = ctx.bumps.multisig;
-    
     multisig.transaction_nonce = 0;
     multisig.last_transaction_timestamp = 0;
     
     msg!("Đã khởi tạo ví MultiSign thành công");
-    msg!("Hãy thêm owner làm guardian đầu tiên để thiết lập recovery hash");
+    msg!("Hãy thêm guardian đầu tiên làm owner");
     Ok(())
 }
-
-
-pub fn configure_webauthn(
-    ctx: Context<ConfigureWebAuthn>,
-    webauthn_pubkey: [u8; 33],
-) -> Result<()> {
-    let multisig = &mut ctx.accounts.multisig;
-    require!(multisig.owner == ctx.accounts.owner.key(), WalletError::InvalidOperation);
-
-    multisig.webauthn_pubkey = webauthn_pubkey;
-    multisig.has_webauthn = true;
-
-    Ok(())
-}
-
-
-#[derive(Accounts)]
-pub struct StoreRecoveryHash<'info> {
-    #[account(
-        mut,
-        seeds = [b"multisig", multisig.credential_id.as_slice()],
-        bump = multisig.bump
-    )]
-    pub multisig: Account<'info, MultiSigWallet>,
-    
-    pub owner: Signer<'info>,
-}
-
-
-#[derive(Accounts)]
-pub struct RecoverAccess<'info> {
-    #[account(
-        mut,
-        seeds = [b"multisig", multisig.credential_id.as_slice()],
-        bump = multisig.bump
-    )]
-    pub multisig: Account<'info, MultiSigWallet>,
-    
-    /// CHECK: Đây là địa chỉ chủ mới sau khi khôi phục, sẽ được lưu vào ví
-    pub new_owner: AccountInfo<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-
-
-pub fn store_recovery_hash(
-    ctx: Context<StoreRecoveryHash>,
-    recovery_hash_intermediate: [u8; 32], 
-    recovery_salt: [u8; 16],
-) -> Result<()> {
-    let multisig = &mut ctx.accounts.multisig;
-    let owner = &ctx.accounts.owner;
-
-    require!(multisig.owner == owner.key(), WalletError::InvalidOperation);
-
-    let mut hasher = Sha256::new();
-    hasher.update(recovery_hash_intermediate);
-    let final_hash: [u8; 32] = hasher.finalize().into();
-
-    multisig.recovery_hash = final_hash;
-    multisig.recovery_salt = recovery_salt;
-    multisig.recovery_nonce += 1;
-
-    msg!("Recovery hash và salt đã được lưu trữ");
-    Ok(())
-}
-
-
-pub fn recover_access(
-    ctx: Context<RecoverAccess>,
-    recovery_hash_intermediate: [u8; 32],
-    new_webauthn_pubkey: [u8; 33],
-) -> Result<()> {
-    let multisig = &mut ctx.accounts.multisig;
-    let new_owner = &ctx.accounts.new_owner;
-    
-    let mut hasher = Sha256::new();
-    hasher.update(recovery_hash_intermediate);
-    let final_hash: [u8; 32] = hasher.finalize().into();
-    
-    require!(multisig.recovery_hash == final_hash, WalletError::InvalidRecoveryKey);
-    
-    multisig.owner = new_owner.key();
-    
-    multisig.webauthn_pubkey = new_webauthn_pubkey;
-    multisig.has_webauthn = true;
-    
-    multisig.recovery_nonce += 1;
-    
-    msg!("Quyền truy cập đã được khôi phục thành công");
-    Ok(())
-}
-
 
 #[derive(Accounts)]
 pub struct VerifyAndExecute<'info> {
     #[account(
         mut,
-        seeds = [b"multisig", multisig.credential_id.as_slice()],
+        seeds = [b"multisig".as_ref(), b"seed_for_pda".as_ref()],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
+    /// Tìm guardian owner có webauthn_pubkey mà chúng ta cần xác thực
+    #[account(
+        seeds = [b"guardian".as_ref(), multisig.key().as_ref(), guardian.guardian_id.as_ref()],
+        constraint = guardian.is_owner == true,
+        bump = guardian.bump
+    )]
+    pub guardian: Account<'info, Guardian>,
+    
     pub clock: Sysvar<'info, Clock>,
     
-    /// CHECK: Đây là tài khoản sysvar chứa thông tin về các instruction trong transaction, được sử dụng để xác thực quá trình ký
+    /// CHECK: Đây là tài khoản sysvar chứa thông tin về các instruction trong transaction
     #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
     pub instruction_sysvar: AccountInfo<'info>,
     
@@ -199,7 +78,7 @@ pub struct VerifyAndExecute<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     
-    /// CHECK: Đây là địa chỉ đích để gửi giao dịch, được kiểm tra trong logic thực thi
+    /// CHECK: Đây là địa chỉ đích để gửi giao dịch
     #[account(mut)]
     pub destination: AccountInfo<'info>,
 }
@@ -214,6 +93,7 @@ pub fn verify_and_execute(
     message: Vec<u8>
 ) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
+    let guardian = &ctx.accounts.guardian;
     let clock = &ctx.accounts.clock;
     
     require!(
@@ -251,9 +131,11 @@ pub fn verify_and_execute(
         WalletError::InvalidSignatureVerification
     );
     
+    let webauthn_pubkey = guardian.webauthn_pubkey.ok_or(WalletError::WebAuthnNotConfigured)?;
+    
     let pk_in_ix = extract_public_key_from_secp_instruction(&secp_ix.data)?;
     require!(
-        pk_in_ix == multisig.webauthn_pubkey,
+        pk_in_ix == webauthn_pubkey,
         WalletError::PublicKeyMismatch
     );
     
@@ -263,23 +145,21 @@ pub fn verify_and_execute(
         WalletError::MessageMismatch
     );
     
-    let mut expected_message = String::new();
-   
-    match action.as_str() {
+    let expected_message = match action.as_str() {
         "transfer" => {
             let amount = params.amount.ok_or(WalletError::InvalidOperation)?;
             let destination = params.destination.ok_or(WalletError::InvalidOperation)?;
             
-            expected_message = format!(
+            format!(
                 "transfer:{}_SOL_to_{},nonce:{},timestamp:{}",
                 amount as f64 / 1_000_000_000.0, 
                 destination.to_string(),
                 nonce,
                 timestamp
-            );
+            )
         },
         _ => return Err(WalletError::UnsupportedAction.into())
-    }
+    };
     
     require!(
         message == expected_message.as_bytes(),
@@ -349,8 +229,8 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
     
     let wallet_address = ctx.accounts.multisig.key();
     let seeds = &[
-        b"multisig",
-        ctx.accounts.multisig.credential_id.as_slice(),
+        b"multisig".as_ref(),
+        b"seed_for_pda".as_ref(),
         &[ctx.accounts.multisig.bump]
     ];
     

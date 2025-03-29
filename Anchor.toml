@@ -42,5 +42,5 @@ startup_wait = 10000
 
 
 [build]
-max_program_size = 400000
+   max_program_size = 500000
 
