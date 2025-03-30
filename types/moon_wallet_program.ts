@@ -252,7 +252,8 @@ export type MoonWalletProgram = {
       ],
       "accounts": [
         {
-          "name": "multisig"
+          "name": "multisig",
+          "writable": true
         },
         {
           "name": "guardian",

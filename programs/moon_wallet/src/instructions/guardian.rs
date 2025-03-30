@@ -3,13 +3,16 @@ use crate::state::*;
 use crate::errors::*;
 use anchor_lang::solana_program::hash::hash;
 
+// Import hàm từ wallet.rs
+use crate::instructions::wallet::process_credential_id_seed;
+
 // Context cho việc thêm guardian
 #[derive(Accounts)]
 #[instruction(guardian_id: u64)]
 pub struct AddGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&multisig.credential_id)],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -94,7 +97,7 @@ pub fn add_guardian(
 pub struct RemoveGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&multisig.credential_id)],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -140,7 +143,8 @@ pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
 #[instruction(guardian_id: u64, owner_guardian_id: u64, is_active: bool)]
 pub struct UpdateGuardianStatus<'info> {
     #[account(
-        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
+        mut,
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&multisig.credential_id)],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -191,7 +195,7 @@ pub fn update_guardian_status(
 pub struct RecoverAccessByGuardian<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&multisig.credential_id)],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,

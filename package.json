@@ -12,8 +12,10 @@
     "@heroicons/react": "^2.2.0",
     "@solana/web3.js": "^1.98.0",
     "bn.js": "^5.2.1",
+    "bootstrap": "^5.3.3",
     "borsh": "^2.0.0",
     "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
     "elliptic": "^6.6.1"
   },
   "devDependencies": {

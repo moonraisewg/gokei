@@ -21,7 +21,7 @@ pub struct InitializeMultisig<'info> {
                8 +  // last_transaction_timestamp
                32 + // owner
                4 + credential_id.len(), // credential_id với 4 bytes cho độ dài
-        seeds = [b"multisig".as_ref(), credential_id.as_bytes()],
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&credential_id)],
         bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -61,7 +61,7 @@ pub fn initialize_multisig(
 pub struct VerifyAndExecute<'info> {
     #[account(
         mut,
-        seeds = [b"multisig".as_ref(), multisig.credential_id.as_bytes()],
+        seeds = [b"multisig".as_ref(), &process_credential_id_seed(&multisig.credential_id)],
         bump = multisig.bump
     )]
     pub multisig: Account<'info, MultiSigWallet>,
@@ -235,9 +235,10 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
     msg!("Thực hiện chuyển {} SOL đến {}", amount as f64 / 1_000_000_000.0, destination);
     
     let wallet_address = ctx.accounts.multisig.key();
+    let credential_id_bytes = process_credential_id_seed(&ctx.accounts.multisig.credential_id);
     let seeds = &[
         b"multisig".as_ref(),
-        ctx.accounts.multisig.credential_id.as_bytes(),
+        &credential_id_bytes,
         &[ctx.accounts.multisig.bump]
     ];
     
@@ -252,12 +253,39 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
         &[
             ctx.accounts.multisig.to_account_info(),
             ctx.accounts.destination.to_account_info(),
-            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info()
         ],
         &[seeds]
     )?;
     
-    msg!("Chuyển tiền thành công");
+    msg!("Chuyển {} SOL đến {} thành công", amount as f64 / 1_000_000_000.0, destination);
+    
     Ok(())
+}
+
+// Hàm để xử lý credential ID, tương tự như xử lý ở frontend
+// Trả về mảng bytes tĩnh thay vì Vec<u8>
+pub fn process_credential_id_seed(credential_id: &str) -> [u8; 24] {
+    let credential_bytes = credential_id.as_bytes();
+    
+    // Seed tối đa cho PDA là 32 bytes, trừ đi "multisig" (8 bytes) còn 24 bytes
+    let mut result = [0u8; 24];
+    
+    if credential_bytes.len() > 24 {
+        msg!("Credential ID dài quá 24 bytes, thực hiện hash");
+        
+        // Hash credential ID nếu quá dài để đảm bảo tính đồng nhất
+        // Sử dụng thuật toán XOR đơn giản
+        // Khác với phiên bản trước: Hash trực tiếp vào 24 bytes thay vì 32 bytes
+        for (i, byte) in credential_bytes.iter().enumerate() {
+            result[i % 24] ^= *byte;
+        }
+    } else {
+        // Copy bytes từ credential ID, padding với 0 nếu cần
+        let len = credential_bytes.len();
+        result[..len].copy_from_slice(credential_bytes);
+    }
+    
+    result
 }
 
