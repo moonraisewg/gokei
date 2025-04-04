@@ -71,4 +71,10 @@ pub enum WalletError {
     
     #[msg("Guardian đang không hoạt động")]
     InactiveGuardian,
+    
+    #[msg("Lỗi tràn số trong phép tính")]
+    ArithmeticOverflow,
+    
+    #[msg("Không đủ SOL trong tài khoản")]
+    InsufficientFunds,
 }

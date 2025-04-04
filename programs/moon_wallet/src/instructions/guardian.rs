@@ -3,10 +3,10 @@ use crate::state::*;
 use crate::errors::*;
 use anchor_lang::solana_program::hash::hash;
 
-// Import hàm từ wallet.rs
+
 use crate::instructions::wallet::process_credential_id_seed;
 
-// Context cho việc thêm guardian
+
 #[derive(Accounts)]
 #[instruction(guardian_id: u64)]
 pub struct AddGuardian<'info> {
@@ -21,14 +21,14 @@ pub struct AddGuardian<'info> {
         init,
         payer = payer,
         space = 8 + 
-               32 +  // wallet
-               8 +  // guardian_id (u64)
-               4 + 32 + // name (string có max 32 bytes)
-               1 +   // is_active
-               32 +  // recovery_hash
-               1 +   // is_owner
-               1 + 33 + // Optional webauthn_pubkey (1 byte discriminator + 33 bytes)
-               1,    // bump
+               32 +  
+               8 + 
+               4 + 32 + 
+               1 +  
+               32 +  
+               1 +   
+               1 + 33 + 
+               1,    
         seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian_id.to_le_bytes()],
         bump
     )]
@@ -43,7 +43,6 @@ pub struct AddGuardian<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// Hàm thêm guardian
 pub fn add_guardian(
     ctx: Context<AddGuardian>,
     guardian_id: u64,
@@ -58,14 +57,12 @@ pub fn add_guardian(
     require!(multisig.guardian_count < 8, WalletError::LimitExceeded);
     require!(guardian_name.len() <= 32, WalletError::NameTooLong);
     
-    // Xác thực thêm: chỉ có thể có một guardian là owner
+    
     if is_owner {
-        // Kiểm tra xem đã có guardian nào là owner chưa
-        // (Cần thêm logic để kiểm tra nếu đã có guardian là owner)
-        // ...
+    
     }
     
-    // Nếu là owner, phải cung cấp webauthn_pubkey
+    
     if is_owner {
         require!(webauthn_pubkey.is_some(), WalletError::WebAuthnNotConfigured);
     }
@@ -113,7 +110,7 @@ pub struct RemoveGuardian<'info> {
     /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub guardian_pubkey: AccountInfo<'info>,
     
-    /// Yêu cầu phải được ký bởi một guardian có quyền owner
+   
     #[account(
         seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &owner_guardian_id.to_le_bytes()],
         constraint = owner_guardian.is_owner == true,
@@ -130,7 +127,7 @@ pub struct RemoveGuardian<'info> {
 pub fn remove_guardian(ctx: Context<RemoveGuardian>) -> Result<()> {
     let multisig = &mut ctx.accounts.multisig;
     
-    // Chỉ kiểm tra guardian_count, không kiểm tra owner nữa vì nay nó nằm trong guardian
+   
     require!(multisig.guardian_count > 0, WalletError::GuardianError);
     multisig.guardian_count -= 1;
 
@@ -171,15 +168,14 @@ pub struct UpdateGuardianStatus<'info> {
     pub owner: Signer<'info>,
 }
 
-// Hàm cập nhật trạng thái guardian
+
 pub fn update_guardian_status(
     ctx: Context<UpdateGuardianStatus>,
     is_active: bool,
 ) -> Result<()> {
     let guardian = &mut ctx.accounts.guardian;
     
-    // Kiểm tra xem người gọi có phải là guardian owner không
-    // Thực hiện điều này bằng cách yêu cầu tài khoản owner_guardian trong struct Context
+  
     require!(ctx.accounts.owner_guardian.is_owner, WalletError::InvalidOperation);
     
     // Cập nhật trạng thái
@@ -189,7 +185,6 @@ pub fn update_guardian_status(
     Ok(())
 }
 
-// Context cho việc khôi phục quyền truy cập bằng Guardian Recovery Hash
 #[derive(Accounts)]
 #[instruction(old_guardian_id: u64, new_guardian_id: u64, recovery_hash_intermediate: [u8; 32])]
 pub struct RecoverAccessByGuardian<'info> {
@@ -200,7 +195,7 @@ pub struct RecoverAccessByGuardian<'info> {
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
-    /// Guardian cũ (không phải owner nữa)
+
     #[account(
         mut,
         seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &old_guardian_id.to_le_bytes()],
@@ -212,7 +207,7 @@ pub struct RecoverAccessByGuardian<'info> {
     /// CHECK: Không còn cần thiết nhưng giữ lại để tương thích
     pub old_guardian_pubkey: AccountInfo<'info>,
     
-    /// Guardian mới (sẽ trở thành owner)
+
     #[account(
         mut,
         seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &new_guardian_id.to_le_bytes()],
@@ -226,7 +221,7 @@ pub struct RecoverAccessByGuardian<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// Hàm khôi phục quyền truy cập bằng Guardian Recovery Hash
+
 pub fn recover_access_by_guardian(
     ctx: Context<RecoverAccessByGuardian>,
     recovery_hash_intermediate: [u8; 32],
@@ -236,24 +231,24 @@ pub fn recover_access_by_guardian(
     let old_guardian = &mut ctx.accounts.old_guardian;
     let new_guardian = &mut ctx.accounts.new_guardian;
     
-    // Xác minh hash khôi phục cho old_guardian
+
     require!(old_guardian.wallet == multisig.key(), WalletError::InvalidGuardian);
     require!(old_guardian.is_active, WalletError::InactiveGuardian);
     
-    // Xác minh hash khôi phục cho guardian cũ
+  
     let hash_result = hash(&recovery_hash_intermediate);
     let final_hash: [u8; 32] = hash_result.to_bytes();
     
     require!(old_guardian.recovery_hash == final_hash, WalletError::InvalidRecoveryKey);
     
-    // Chuyển quyền owner từ guardian cũ sang guardian mới
+    
     old_guardian.is_owner = false;
     old_guardian.webauthn_pubkey = None;
     
     new_guardian.is_owner = true;
     new_guardian.webauthn_pubkey = Some(new_webauthn_pubkey);
     
-    // Tăng nonce để ngăn chặn tấn công phát lại
+
     multisig.recovery_nonce += 1;
     
     msg!("Quyền truy cập đã được khôi phục thành công thông qua guardian");

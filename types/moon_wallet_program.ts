@@ -137,9 +137,6 @@ export type MoonWalletProgram = {
         },
         {
           "name": "oldGuardian",
-          "docs": [
-            "Guardian cũ (không phải owner nữa)"
-          ],
           "writable": true
         },
         {
@@ -147,9 +144,6 @@ export type MoonWalletProgram = {
         },
         {
           "name": "newGuardian",
-          "docs": [
-            "Guardian mới (sẽ trở thành owner)"
-          ],
           "writable": true
         },
         {
@@ -213,10 +207,7 @@ export type MoonWalletProgram = {
           "name": "guardianPubkey"
         },
         {
-          "name": "ownerGuardian",
-          "docs": [
-            "Yêu cầu phải được ký bởi một guardian có quyền owner"
-          ]
+          "name": "ownerGuardian"
         },
         {
           "name": "owner",
@@ -502,6 +493,16 @@ export type MoonWalletProgram = {
       "code": 6022,
       "name": "inactiveGuardian",
       "msg": "Guardian đang không hoạt động"
+    },
+    {
+      "code": 6023,
+      "name": "arithmeticOverflow",
+      "msg": "Lỗi tràn số trong phép tính"
+    },
+    {
+      "code": 6024,
+      "name": "insufficientFunds",
+      "msg": "Không đủ SOL trong tài khoản"
     }
   ],
   "types": [

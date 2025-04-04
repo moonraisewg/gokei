@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Guardian {
     pub wallet: Pubkey,              
-    pub guardian_id: u64,       // Thay đổi từ Pubkey sang u64 để tiết kiệm kích thước     
+    pub guardian_id: u64,          
     pub name: String,                
     pub is_active: bool,             
     pub recovery_hash: [u8; 32],     
