@@ -10,13 +10,13 @@ no-idl = false
 idl-build = true
 
 [programs.localnet]
-moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
+moon_wallet_program = "5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN"
 
 [programs.devnet]
-moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
+moon_wallet_program = "5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN"
 
 [programs.mainnet]
-moon_wallet_program = "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3"
+moon_wallet_program = "5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN"
 
 [registry]
 url = "https://api.apr.dev"

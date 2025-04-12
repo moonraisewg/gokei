@@ -13,7 +13,7 @@ pub struct MultiSigWallet {
     pub credential_id: String,       // Credential ID từ WebAuthn, dùng làm seed
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ActionParams {
     pub amount: Option<u64>,        
     pub destination: Option<Pubkey>, 

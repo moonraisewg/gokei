@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use std::str::FromStr;
-use anchor_lang::solana_program;
+
 use anchor_lang::solana_program::sysvar::instructions::load_instruction_at_checked;
 use crate::state::*;
 use crate::errors::*;
@@ -52,9 +52,7 @@ pub fn initialize_multisig(
     multisig.last_transaction_timestamp = 0;
     multisig.owner = ctx.accounts.fee_payer.key();
     multisig.credential_id = credential_id;
-    
-    msg!("Đã khởi tạo ví MultiSign thành công với tên: {}", multisig.credential_id);
-    msg!("Hãy thêm guardian đầu tiên làm owner");
+
     Ok(())
 }
 
@@ -67,7 +65,7 @@ pub struct VerifyAndExecute<'info> {
     )]
     pub multisig: Account<'info, MultiSigWallet>,
     
-    /// Tìm guardian owner có webauthn_pubkey mà chúng ta cần xác thực
+    
     #[account(
         seeds = [b"guardian".as_ref(), multisig.key().as_ref(), &guardian.guardian_id.to_le_bytes()],
         constraint = guardian.is_owner == true,
@@ -91,6 +89,16 @@ pub struct VerifyAndExecute<'info> {
     pub destination: AccountInfo<'info>,
 }
 
+/// Hàm chuẩn hóa public key trước khi tính hash
+/// Đảm bảo format của public key đồng nhất trước khi hash
+fn standardize_pubkey(pubkey: &[u8; 33]) -> [u8; 33] {
+    // Đảm bảo public key chỉ được xử lý thống nhất
+    // Hiện tại chỉ trả về pubkey gốc, có thể mở rộng xử lý trong tương lai
+    msg!("Standardizing pubkey: {}", to_hex(pubkey));
+    
+    // Chỉ trả về pubkey gốc, đảm bảo xử lý giống nhau giữa các chức năng
+    *pubkey
+}
 
 pub fn verify_and_execute(
     ctx: Context<VerifyAndExecute>,
@@ -149,15 +157,15 @@ pub fn verify_and_execute(
         WalletError::PublicKeyMismatch
     );
     
-    // THÊM CODE MỚI: Tính hash của webauthn public key
-    let pubkey_hash = hash(&webauthn_pubkey).to_bytes();
-    // Lấy 6 bytes đầu và chuyển sang hex
+    // Chuẩn hóa public key trước khi hash - THAY ĐỔI Ở ĐÂY
+    let standardized_pubkey = standardize_pubkey(&webauthn_pubkey);
+    msg!("Standardized public key: {}", to_hex(&standardized_pubkey));
+
+    let pubkey_hash = hash(&standardized_pubkey).to_bytes();
     let pubkey_hash_hex = to_hex(&pubkey_hash[0..6]);
     
-    msg!("Public key hash: {}", pubkey_hash_hex);
+    msg!("Public key hash after standardization: {}", pubkey_hash_hex);
     
-    // Bước cuối cùng: Kiểm tra message gốc từ tham số khớp với thông tin giao dịch
-    // Message gốc này được dùng để tạo hash và ký ở frontend
     let expected_message = match action.as_str() {
         "transfer" => {
             let amount = params.amount.ok_or(WalletError::InvalidOperation)?;
@@ -251,17 +259,14 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
     
     msg!("Thực hiện chuyển {} SOL đến {}", amount as f64 / 1_000_000_000.0, destination);
     
-    // Lấy thông tin tài khoản PDA
     let multisig_info = ctx.accounts.multisig.to_account_info();
     let credential_id_bytes = process_credential_id_seed(&ctx.accounts.multisig.credential_id);
-    let seeds = &[
+    let _seeds = &[
         b"multisig".as_ref(),
         &credential_id_bytes,
         &[ctx.accounts.multisig.bump]
     ];
     
-    // Thực hiện transfer_lamports với signer seeds thay vì invoke_signed với system_instruction::transfer
-    // Phương pháp này phù hợp hơn khi chuyển tiền từ PDA
     let dest_starting_lamports = ctx.accounts.destination.lamports();
     **ctx.accounts.destination.lamports.borrow_mut() = dest_starting_lamports.checked_add(amount)
         .ok_or(WalletError::ArithmeticOverflow)?;
@@ -275,8 +280,6 @@ fn execute_transfer(ctx: Context<VerifyAndExecute>, params: &ActionParams) -> Re
     Ok(())
 }
 
-// Hàm để xử lý credential ID, tương tự như xử lý ở frontend
-// Trả về mảng bytes tĩnh thay vì Vec<u8>
 pub fn process_credential_id_seed(credential_id: &str) -> [u8; 24] {
     msg!("CONTRACT - process_credential_id_seed");
     msg!("Input credential ID: {}", credential_id);

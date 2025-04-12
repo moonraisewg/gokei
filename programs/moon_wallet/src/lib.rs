@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::pubkey::Pubkey;
+use state::wallet::ActionParams;
+
+// Cập nhật version số
+declare_id!("5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN");
 
 mod state;
 mod instructions;
 mod errors;
 
 use instructions::*;
-use state::wallet::ActionParams;
-
-
-declare_id!("DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3");
 
 #[program]
 pub mod moon_wallet_program {
@@ -69,6 +70,48 @@ pub mod moon_wallet_program {
         message: Vec<u8>
     ) -> Result<()> {
         instructions::wallet::verify_and_execute(ctx, action, params, nonce, timestamp, message)
+    }
+    
+    // Chức năng mới: Tạo đề xuất giao dịch
+    pub fn create_proposal(
+        ctx: Context<CreateProposal>,
+        proposal_id: u64,
+        description: String,
+        proposer_guardian_id: u64,
+        action: String,
+        params: ActionParams
+    ) -> Result<()> {
+        instructions::proposal::create_proposal(ctx, proposal_id, description, proposer_guardian_id, action, params)
+    }
+    
+    // Chức năng mới: Phê duyệt đề xuất giao dịch
+    pub fn approve_proposal(
+        ctx: Context<ApproveProposal>,
+        proposal_id: u64,
+        guardian_id: u64,
+        timestamp: i64,
+        message: Vec<u8>
+    ) -> Result<()> {
+        instructions::proposal::approve_proposal(ctx, proposal_id, guardian_id, timestamp, message)
+    }
+    
+    // Chức năng mới: Thực thi đề xuất giao dịch
+    pub fn execute_proposal(
+        ctx: Context<ExecuteProposal>,
+        proposal_id: u64
+    ) -> Result<()> {
+        instructions::proposal::execute_proposal(ctx, proposal_id)
+    }
+    
+    // Chức năng mới: Từ chối đề xuất giao dịch
+    pub fn reject_proposal(
+        ctx: Context<RejectProposal>,
+        proposal_id: u64,
+        guardian_id: u64,
+        timestamp: i64,
+        message: Vec<u8>
+    ) -> Result<()> {
+        instructions::proposal::reject_proposal(ctx, proposal_id, guardian_id, timestamp, message)
     }
 }
 

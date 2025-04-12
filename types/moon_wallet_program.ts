@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/moon_wallet_program.json`.
  */
 export type MoonWalletProgram = {
-  "address": "DeN1rBfabZezHPvrq9q7BbzUbZkrjnHE1kQDrPK8kWQ3",
+  "address": "5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN",
   "metadata": {
     "name": "moonWalletProgram",
     "version": "0.1.0",
@@ -78,6 +78,175 @@ export type MoonWalletProgram = {
               ]
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "approveProposal",
+      "discriminator": [
+        136,
+        108,
+        102,
+        85,
+        98,
+        114,
+        7,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "proposal",
+          "writable": true
+        },
+        {
+          "name": "signature",
+          "writable": true
+        },
+        {
+          "name": "guardian"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "instructionSysvar"
+        },
+        {
+          "name": "clock"
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
+        },
+        {
+          "name": "guardianId",
+          "type": "u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "i64"
+        },
+        {
+          "name": "message",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "createProposal",
+      "discriminator": [
+        132,
+        116,
+        68,
+        174,
+        216,
+        160,
+        198,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "proposal",
+          "writable": true
+        },
+        {
+          "name": "proposerGuardian"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "clock"
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "proposerGuardianId",
+          "type": "u64"
+        },
+        {
+          "name": "action",
+          "type": "string"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "actionParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "executeProposal",
+      "discriminator": [
+        186,
+        60,
+        116,
+        133,
+        108,
+        128,
+        111,
+        28
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "proposal",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "clock"
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
         }
       ]
     },
@@ -179,6 +348,61 @@ export type MoonWalletProgram = {
               33
             ]
           }
+        }
+      ]
+    },
+    {
+      "name": "rejectProposal",
+      "discriminator": [
+        114,
+        162,
+        164,
+        82,
+        191,
+        11,
+        102,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "proposal",
+          "writable": true
+        },
+        {
+          "name": "guardian"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "instructionSysvar"
+        },
+        {
+          "name": "clock"
+        }
+      ],
+      "args": [
+        {
+          "name": "proposalId",
+          "type": "u64"
+        },
+        {
+          "name": "guardianId",
+          "type": "u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "i64"
+        },
+        {
+          "name": "message",
+          "type": "bytes"
         }
       ]
     },
@@ -298,10 +522,7 @@ export type MoonWalletProgram = {
           "writable": true
         },
         {
-          "name": "guardian",
-          "docs": [
-            "Tìm guardian owner có webauthn_pubkey mà chúng ta cần xác thực"
-          ]
+          "name": "guardian"
         },
         {
           "name": "clock"
@@ -375,6 +596,32 @@ export type MoonWalletProgram = {
         77,
         189,
         238
+      ]
+    },
+    {
+      "name": "proposalSignature",
+      "discriminator": [
+        206,
+        136,
+        120,
+        195,
+        80,
+        13,
+        39,
+        74
+      ]
+    },
+    {
+      "name": "transactionProposal",
+      "discriminator": [
+        39,
+        205,
+        202,
+        42,
+        47,
+        200,
+        144,
+        95
       ]
     }
   ],
@@ -503,6 +750,16 @@ export type MoonWalletProgram = {
       "code": 6024,
       "name": "insufficientFunds",
       "msg": "Không đủ SOL trong tài khoản"
+    },
+    {
+      "code": 6025,
+      "name": "multisigMismatch",
+      "msg": "Địa chỉ ví multisig không khớp với đề xuất"
+    },
+    {
+      "code": 6026,
+      "name": "invalidOwner",
+      "msg": "Chủ sở hữu tài khoản không hợp lệ"
     }
   ],
   "types": [
@@ -620,6 +877,116 @@ export type MoonWalletProgram = {
           {
             "name": "credentialId",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "proposalSignature",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proposal",
+            "type": "pubkey"
+          },
+          {
+            "name": "guardianId",
+            "type": "u64"
+          },
+          {
+            "name": "signatureTime",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "proposalStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "pending"
+          },
+          {
+            "name": "executed"
+          },
+          {
+            "name": "rejected"
+          },
+          {
+            "name": "expired"
+          }
+        ]
+      }
+    },
+    {
+      "name": "transactionProposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "multisig",
+            "type": "pubkey"
+          },
+          {
+            "name": "proposalId",
+            "type": "u64"
+          },
+          {
+            "name": "proposer",
+            "type": "pubkey"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "action",
+            "type": "string"
+          },
+          {
+            "name": "params",
+            "type": {
+              "defined": {
+                "name": "actionParams"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "proposalStatus"
+              }
+            }
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "executedAt",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "signaturesCount",
+            "type": "u8"
+          },
+          {
+            "name": "requiredSignatures",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

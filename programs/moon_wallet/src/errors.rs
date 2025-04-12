@@ -77,4 +77,10 @@ pub enum WalletError {
     
     #[msg("Không đủ SOL trong tài khoản")]
     InsufficientFunds,
+    
+    #[msg("Địa chỉ ví multisig không khớp với đề xuất")]
+    MultisigMismatch,
+    
+    #[msg("Chủ sở hữu tài khoản không hợp lệ")]
+    InvalidOwner,
 }
