@@ -3,7 +3,7 @@ use anchor_lang::solana_program::pubkey::Pubkey;
 use state::wallet::ActionParams;
 
 // Cập nhật version số
-declare_id!("5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN");
+declare_id!("6Y3N5AQRQtviTrmRcf29yHWBu3ft7xEoj8kqmykDGvKP");
 
 mod state;
 mod instructions;

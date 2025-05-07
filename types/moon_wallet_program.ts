@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/moon_wallet_program.json`.
  */
 export type MoonWalletProgram = {
-  "address": "5tFJskbgqrPxb992SUf6JzcQWJGbJuvsta2pRnZBcygN",
+  "address": "6Y3N5AQRQtviTrmRcf29yHWBu3ft7xEoj8kqmykDGvKP",
   "metadata": {
     "name": "moonWalletProgram",
     "version": "0.1.0",

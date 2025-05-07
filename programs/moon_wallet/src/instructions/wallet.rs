@@ -14,14 +14,14 @@ pub struct InitializeMultisig<'info> {
         init,
         payer = fee_payer,
         space = 8 + 
-               1 +  // threshold
-               1 +  // guardian_count
-               8 +  // recovery_nonce
-               1 +  // bump
-               8 +  // transaction_nonce
-               8 +  // last_transaction_timestamp
-               32 + // owner
-               4 + credential_id.len(), // credential_id với 4 bytes cho độ dài
+               1 +  
+               1 +  
+               8 +  
+               1 +  
+               8 +  
+               8 +  
+               32 + 
+               4 + credential_id.len(), 
         seeds = [b"multisig".as_ref(), &process_credential_id_seed(&credential_id)],
         bump
     )]
@@ -89,14 +89,10 @@ pub struct VerifyAndExecute<'info> {
     pub destination: AccountInfo<'info>,
 }
 
-/// Hàm chuẩn hóa public key trước khi tính hash
-/// Đảm bảo format của public key đồng nhất trước khi hash
+
 fn standardize_pubkey(pubkey: &[u8; 33]) -> [u8; 33] {
-    // Đảm bảo public key chỉ được xử lý thống nhất
-    // Hiện tại chỉ trả về pubkey gốc, có thể mở rộng xử lý trong tương lai
     msg!("Standardizing pubkey: {}", to_hex(pubkey));
     
-    // Chỉ trả về pubkey gốc, đảm bảo xử lý giống nhau giữa các chức năng
     *pubkey
 }
 
@@ -185,11 +181,9 @@ pub fn verify_and_execute(
     
     msg!("Expected message: {}", expected_message);
    
-    // Debug chi tiết để phát hiện sự khác biệt
     msg!("Expected message length: {}", expected_message.len());
     msg!("Received message length: {}", message.len());
     
-    // Log từng byte của message để so sánh
     msg!("Expected message bytes:");
     for (i, byte) in expected_message.as_bytes().iter().enumerate() {
         msg!("  [{}] {} ({})", i, byte, char::from(*byte));
@@ -200,7 +194,6 @@ pub fn verify_and_execute(
         msg!("  [{}] {} ({})", i, byte, char::from(*byte));
     }
     
-    // So sánh các byte khác nhau
     if expected_message.as_bytes().len() == message.len() {
         for (i, (exp, rec)) in expected_message.as_bytes().iter().zip(message.iter()).enumerate() {
             if exp != rec {
@@ -287,32 +280,26 @@ pub fn process_credential_id_seed(credential_id: &str) -> [u8; 24] {
     let credential_bytes = credential_id.as_bytes();
     msg!("Credential bytes length: {}", credential_bytes.len());
     
-    // Debug từng byte
     let bytes_hex = to_hex(credential_bytes);
     msg!("Credential bytes (hex): {}", bytes_hex);
     
-    // Seed tối đa cho PDA là 32 bytes, trừ đi "multisig" (8 bytes) còn 24 bytes
     let mut result = [0u8; 24];
     
     if credential_bytes.len() > 24 {
         msg!("Credential ID dài quá 24 bytes, thực hiện hash");
         
-        // Hash credential ID nếu quá dài để đảm bảo tính đồng nhất
-        // Sử dụng thuật toán XOR đơn giản
-        // Khác với phiên bản trước: Hash trực tiếp vào 24 bytes thay vì 32 bytes
+       
         for (i, byte) in credential_bytes.iter().enumerate() {
             result[i % 24] ^= *byte;
         }
         
-        // Debug kết quả hash
         let result_hex = to_hex(&result);
         msg!("Seed sau khi hash (hex): {}", result_hex);
     } else {
-        // Copy bytes từ credential ID, padding với 0 nếu cần
+       
         let len = credential_bytes.len();
         result[..len].copy_from_slice(credential_bytes);
         
-        // Debug kết quả
         let result_hex = to_hex(&result);
         msg!("Seed không hash (hex, padded): {}", result_hex);
     }
@@ -320,11 +307,10 @@ pub fn process_credential_id_seed(credential_id: &str) -> [u8; 24] {
     result
 }
 
-/// Chuyển đổi mảng bytes thành chuỗi hex
+
 fn to_hex(bytes: &[u8]) -> String {
     let mut result = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
-        // Format mỗi byte thành 2 ký tự hex
         let hex = format!("{:02x}", byte);
         result.push_str(&hex);
     }
